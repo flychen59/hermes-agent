@@ -2284,8 +2284,18 @@ TERMINAL_SCHEMA = {
 
 
 def _handle_terminal(args, **kw):
+    # GLM-style models sometimes use different key names for the command
+    import logging as _logging
+    _logging.getLogger(__name__).warning("terminal args received: %r", args)
+    command = (
+        args.get("command")
+        or args.get("cmd")
+        or args.get("shell_command")
+        or args.get("bash_command")
+        or args.get("input")
+    )
     return terminal_tool(
-        command=args.get("command"),
+        command=command,
         background=args.get("background", False),
         timeout=args.get("timeout"),
         task_id=kw.get("task_id"),

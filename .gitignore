@@ -70,3 +70,16 @@ mini-swe-agent/
 result
 website/static/api/skills-index.json
 models-dev-upstream/
+
+# Agents framework
+agents/__pycache__/
+agents/memory/evolution/
+*.pyc
+*.db
+
+# Translation temp files
+Intervistata*.docx
+Intervistata*.txt
+build_docx.py
+papers/
+Resophy/

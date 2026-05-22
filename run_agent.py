@@ -632,6 +632,34 @@ def _repair_tool_call_arguments(raw_args: str, tool_name: str = "?") -> str:
     except (json.JSONDecodeError, TypeError, ValueError):
         pass
 
+    # Repair pass 0b: "Extra data" — GLM-5.1 prepends an empty `{}`
+    # before the real arguments, e.g. `{}{"command":"ls"}`.
+    # Scan all JSON objects and return the last (most complete) one.
+    try:
+        decoder = json.JSONDecoder()
+        pos = 0
+        last_obj = None
+        while pos < len(raw_stripped):
+            idx = raw_stripped.find('{', pos)
+            if idx == -1:
+                break
+            try:
+                obj, end = decoder.raw_decode(raw_stripped, idx)
+                if isinstance(obj, dict) and obj:  # prefer non-empty dicts
+                    last_obj = obj
+                pos = end
+            except json.JSONDecodeError:
+                pos = idx + 1
+        if last_obj is not None:
+            extracted = json.dumps(last_obj, separators=(",", ":"))
+            logger.warning(
+                "Repaired extra-data tool_call arguments for %s: %s → %s",
+                tool_name, raw_stripped[:80], extracted[:80],
+            )
+            return extracted
+    except (json.JSONDecodeError, TypeError, ValueError):
+        pass
+
     # Attempt common JSON repairs
     fixed = raw_stripped
     # 1. Strip trailing commas before } or ]
@@ -678,6 +706,33 @@ def _repair_tool_call_arguments(raw_args: str, tool_name: str = "?") -> str:
                 tool_name, raw_stripped[:80], escaped[:80],
             )
             return escaped
+    except (json.JSONDecodeError, TypeError, ValueError):
+        pass
+
+    # Repair pass 5: "Extra data" — same logic as pass 0b, applied after
+    # other repairs. Extract the last non-empty JSON object.
+    try:
+        decoder = json.JSONDecoder()
+        pos = 0
+        last_obj = None
+        while pos < len(fixed):
+            idx = fixed.find('{', pos)
+            if idx == -1:
+                break
+            try:
+                obj, end = decoder.raw_decode(fixed, idx)
+                if isinstance(obj, dict) and obj:
+                    last_obj = obj
+                pos = end
+            except json.JSONDecodeError:
+                pos = idx + 1
+        if last_obj is not None:
+            extracted = json.dumps(last_obj, separators=(",", ":"))
+            logger.warning(
+                "Repaired extra-data tool_call arguments for %s: %s → %s",
+                tool_name, raw_stripped[:80], extracted[:80],
+            )
+            return extracted
     except (json.JSONDecodeError, TypeError, ValueError):
         pass
 
@@ -10880,7 +10935,9 @@ class AIAgent:
                     # Provider signaled "stream not supported" on a previous
                     # attempt — switch to non-streaming for the rest of this
                     # session instead of re-failing every retry.
-                    if getattr(self, "_disable_streaming", False):
+                    if self.provider == "custom":
+                        _use_streaming = False
+                    elif getattr(self, "_disable_streaming", False):
                         _use_streaming = False
                     # CopilotACPClient communicates via subprocess stdio and
                     # returns a plain SimpleNamespace — not an iterable
@@ -12813,7 +12870,13 @@ class AIAgent:
                         try:
                             json.loads(args)
                         except json.JSONDecodeError as e:
-                            invalid_json_args.append((tc.function.name, str(e)))
+                            # Attempt repair before flagging as invalid.
+                            repaired = _repair_tool_call_arguments(args, tc.function.name)
+                            try:
+                                json.loads(repaired)
+                                tc.function.arguments = repaired
+                            except json.JSONDecodeError:
+                                invalid_json_args.append((tc.function.name, str(e)))
                     
                     if invalid_json_args:
                         # Check if the invalid JSON is due to truncation rather

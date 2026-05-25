@@ -19,6 +19,7 @@ metadata:
 - `references/browser-automation-tools.md` — 网页浏览器自动化工具调研（Playwright/Browser Use/Selenium/CloakBrowser 等），含反爬虫方案推荐策略
 - `references/agent-orchestration-frameworks.md` — Agent 编排框架调研（Open Multi-Agent/CrewAI/GPT Researcher/ValueCell 等），含推荐架构
 - `references/openclaw-vs-hermes-agent.md` — OpenClaw vs Hermes Agent 对比研究（2026-05），含社区评价、核心差异、安全对比
+- `references/multi-agent-company-frameworks.md` — 多 Agent "AI 公司"框架调研（2026-05），含 CrewAI/MetaGPT/ChatDev/AutoGen 对比 + 自我进化框架 + AI 一人公司角色设计
 
 ## 使用场景
 - 调研技术方案和 API
@@ -82,6 +83,10 @@ metadata:
 - 注意文章发布日期，避免过时信息
 - GitHub 项目看 last commit 时间和 issue 活跃度
 - GitHub API 未认证会限流（每小时60次），大量搜索时优先用 `gh api`
+- GitHub API 限流后返回空 JSON（`total_count: 0`）而不是报错，**不会告诉你被限流了**——如果搜索结果为空，检查是否连续发了太多请求
+- **代理必须加 `-x http://127.0.0.1:7897`**：不加代理裸连 GitHub API 很快被限流（返回空 JSON），加了代理反而更稳定。用户明确要求用代理：`curl -x http://127.0.0.1:7897`
+- GitHub API 连续请求间隔至少 2-3 秒（`sleep 3`），否则即使有代理也会被限流返回 `total_count: 0`
+- 批量查 repo star 时用 Python 循环 + `curl` 逐个查比一次搜大量关键词更稳定
 - JSON 解析大响应时可能遇到控制字符，用 `json.loads(text, strict=False)` 或分段处理
 - delegate_task 的 web 搜索工具经常返回空结果，重要搜索直接用 terminal + curl
 - DuckDuckGo 结果 URL 是重定向链接（`//duckduckgo.com/l/?uddg=...`），需要 URL decode 提取真实地址

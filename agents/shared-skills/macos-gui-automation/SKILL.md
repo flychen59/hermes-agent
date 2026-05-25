@@ -1,7 +1,7 @@
 ---
 name: macos-gui-automation
 description: "macOS GUI 自动化控制 — 模拟点击、键盘输入、窗口管理、应用控制、截屏视觉理解闭环。使用 AppleScript/osascript 实现全系统 GUI 操作。"
-version: 2.1.0
+version: 2.2.0
 metadata:
   hermes:
     tags: [automation, macos, gui, applescript, desktop-control, accessibility]
@@ -22,11 +22,13 @@ metadata:
     requires:
       permissions: ["辅助功能 (Accessibility)", "屏幕录制"]
   evolution:
-    use_count: 5
-    last_used: "2026-05-26T00:24:00+08:00"
-    success_rate: 0.85
+    use_count: 10
+    last_used: "2026-05-26T00:45:00+08:00"
+    success_rate: 0.90
     auto_evolve: true
     patches:
+      - date: "2026-05-26"
+        change: "添加并发检测 + 错误恢复机制"
       - date: "2026-05-26"
         change: "添加闭环验证流程，修复截屏路径问题"
 ---

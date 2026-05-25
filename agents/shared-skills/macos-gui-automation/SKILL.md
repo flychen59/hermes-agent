@@ -1,59 +1,101 @@
 ---
 name: macos-gui-automation
-description: "macOS GUI 自动化控制 — 模拟点击、键盘输入、窗口管理、应用控制、截屏视觉理解闭环。使用 AppleScript/osascript 实现全系统 GUI 操作，支持操作验证。"
-version: 2.0.0
+description: "macOS GUI 自动化控制 — 模拟点击、键盘输入、窗口管理、应用控制、截屏视觉理解闭环。使用 AppleScript/osascript 实现全系统 GUI 操作。"
+version: 2.1.0
 metadata:
+  hermes:
+    tags: [automation, macos, gui, applescript, desktop-control, accessibility]
+    author: flychen
+    created: "2026-05-25"
+    related_skills: [browser-automation, apple-notes, apple-reminders]
+    priority: high
+    mobile_trigger: true
+    examples:
+      - "查看微信第一个对话是谁"
+      - "在 Chrome 中搜索 xxx"
+      - "打开 Finder 进入下载文件夹"
+      - "截图当前桌面"
+      - "切换到 VS Code"
   openclaw:
     emoji: "🖥️"
     os: ["darwin"]
     requires:
       permissions: ["辅助功能 (Accessibility)", "屏幕录制"]
+  evolution:
+    use_count: 5
+    last_used: "2026-05-26T00:24:00+08:00"
+    success_rate: 0.85
+    auto_evolve: true
+    patches:
+      - date: "2026-05-26"
+        change: "添加闭环验证流程，修复截屏路径问题"
 ---
 
-# macOS GUI 自动化（闭环验证版）
+# macOS GUI 自动化
 
-通过 AppleScript + exec + image 工具实现 macOS 全系统 GUI 自动化控制，**支持操作后视觉验证**。
+> 🖥️ **桌面 Agent 核心能力** — 通过视觉理解 + 操作执行 + 结果验证实现完整 GUI 控制闭环
 
-## 前置要求
+## 权限设置
 
-**必须授权两项权限**：
-1. **辅助功能**：系统设置 → 隐私与安全性 → 辅助功能 → 添加 Terminal
-2. **屏幕录制**：系统设置 → 隐私与安全性 → 屏幕录制 → 允许 Terminal
+### 必须授权
 
-验证授权：
+| 权限 | 路径 | 应用 |
+|------|------|------|
+| **辅助功能** | 系统设置 → 隐私与安全性 → 辅助功能 | Terminal.app |
+| **屏幕录制** | 系统设置 → 隐私与安全性 → 屏幕录制 | Terminal.app |
+| **自动化** | 系统设置 → 隐私与安全性 → 自动化 | Terminal → 允许控制其他应用 |
+
+### 快速授权命令
+
 ```bash
-# 辅助功能测试
-osascript -e 'tell application "System Events" to get name of first process'
-
-# 截屏测试
-screencapture -x ~/.openclaw/workspace/test.png
+# 打开三个权限设置页面
+open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+open "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
+open "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation"
 ```
 
 ---
 
-## 核心能力（已验证 ✅）
+## 核心能力矩阵
 
-| 能力 | 工具 | 状态 |
-|------|------|------|
-| 截屏 | `screencapture` | ✅ 已验证 |
-| 视觉理解 | `image` 工具 | ✅ 已验证 |
-| 点击操作 | AppleScript `click at {x,y}` | ✅ 已验证 |
-| 键盘输入 | AppleScript `keystroke` | ✅ 已验证 |
-| 窗口查询 | AppleScript `get name of every process` | ✅ 已验证 |
-| 应用切换 | AppleScript `activate` | ✅ 已验证 |
+| 能力 | 命令 | 状态 | 验证方式 |
+|------|------|------|----------|
+| **截屏** | `screencapture` | ✅ | 检查文件存在 |
+| **视觉理解** | `image` 工具 | ✅ | AI 分析内容 |
+| **点击** | `click at {x,y}` | ✅ | 截屏对比 |
+| **键盘输入** | `keystroke` | ✅ | 截屏验证 |
+| **窗口查询** | `get name of every process` | ✅ | 输出确认 |
+| **应用切换** | `activate` | ✅ | 前台应用确认 |
 
 ---
 
-## 核心命令
+## 操作闭环流程
 
-### 1. 截屏 + 视觉理解（闭环验证）
+```
+┌────────────────────────────────────────────────────────────┐
+│                    GUI Agent 闭环                           │
+│                                                            │
+│  1. OBSERVE  ──→  截屏当前状态                              │
+│  2. ANALYZE  ──→  AI 视觉理解，定位目标                     │
+│  3. PLAN     ──→  决策操作（点击/输入/切换）                 │
+│  4. ACT      ──→  执行 AppleScript 命令                     │
+│  5. VERIFY   ──→  截屏 + 视觉验证结果                        │
+│  6. REPORT   ──→  向用户报告操作结果                         │
+└────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 命令手册
+
+### 1. 截屏 + 视觉理解
 
 ```bash
-# 截屏
-screencapture -x ~/.openclaw/workspace/screen.png
+# 截屏到 workspace
+screencapture ~/.openclaw/workspace/screen.png
 
-# 视觉理解（AI 分析）
-# 使用 image 工具分析截图
+# 视觉理解（调用 image 工具）
+# prompt: "描述这个截图，包括前台应用、窗口位置、可点击元素"
 ```
 
 ### 2. 窗口管理
@@ -66,15 +108,16 @@ osascript -e 'tell application "System Events" to get name of every process whos
 osascript -e 'tell application "System Events" to get name of first process whose frontmost is true'
 
 # 切换应用
-osascript -e 'tell application "Finder" to activate'
 osascript -e 'tell application "WeChat" to activate'
 osascript -e 'tell application "Google Chrome" to activate'
+osascript -e 'tell application "Finder" to activate'
+osascript -e 'tell application "Code" to activate'  # VS Code
 ```
 
 ### 3. 鼠标操作
 
 ```bash
-# 点击坐标 (x, y) - 从左上角开始
+# 点击坐标 (x, y) - 从左上角 (0,0) 开始
 osascript -e 'tell application "System Events" to click at {100, 200}'
 
 # 右键点击
@@ -82,6 +125,9 @@ osascript -e 'tell application "System Events" to right click at {100, 200}'
 
 # 双击
 osascript -e 'tell application "System Events" to double click at {100, 200}'
+
+# 拖拽
+osascript -e 'tell application "System Events" to drag from {100, 100} to {300, 300}'
 ```
 
 ### 4. 键盘操作
@@ -90,153 +136,158 @@ osascript -e 'tell application "System Events" to double click at {100, 200}'
 # 输入文本
 osascript -e 'tell application "System Events" to keystroke "Hello World"'
 
-# 按键组合 (Cmd+C)
-osascript -e 'tell application "System Events" to keystroke "c" using command down'
+# 按键组合
+osascript -e 'tell application "System Events" to keystroke "c" using command down'  # Cmd+C
+osascript -e 'tell application "System Events" to keystroke "v" using command down'  # Cmd+V
+osascript -e 'tell application "System Events" to keystroke "f" using command down'  # Cmd+F
+osascript -e 'tell application "System Events" to keystroke "t" using command down'  # Cmd+T
+osascript -e 'tell application "System Events" to keystroke "0" using command down'  # Cmd+0
 
-# Cmd+F 搜索
-osascript -e 'tell application "System Events" to keystroke "f" using command down'
-
-# 回车键 (key code 36)
-osascript -e 'tell application "System Events" to key code 36'
-
-# 常用 key code:
-# 36 = Return, 48 = Tab, 49 = Space, 51 = Delete, 53 = Escape
-# 123 = Left, 124 = Right, 125 = Down, 126 = Up
+# 特殊按键 (key code)
+osascript -e 'tell application "System Events" to key code 36'  # Return
+osascript -e 'tell application "System Events" to key code 48'  # Tab
+osascript -e 'tell application "System Events" to key code 49'  # Space
+osascript -e 'tell application "System Events" to key code 51'  # Delete
+osascript -e 'tell application "System Events" to key code 53'  # Escape
+osascript -e 'tell application "System Events" to key code 123' # Left Arrow
+osascript -e 'tell application "System Events" to key code 124' # Right Arrow
+osascript -e 'tell application "System Events" to key code 125' # Down Arrow
+osascript -e 'tell application "System Events" to key code 126' # Up Arrow
 ```
 
 ### 5. 中文输入（剪贴板中转）
 
 ```bash
-# 先复制到剪贴板
+# 复制到剪贴板
 echo "中文内容" | pbcopy
 
-# 再粘贴
+# 粘贴
 osascript -e 'tell application "System Events" to keystroke "v" using command down'
+```
+
+### 6. Finder 操作
+
+```bash
+# 打开路径
+osascript -e 'tell application "Finder" to open (POSIX file "/Users/flychen/Downloads")'
+osascript -e 'tell application "Finder" to activate'
+
+# 选择文件
+osascript -e 'tell application "Finder" to select (POSIX file "/Users/flychen/test.txt")'
+
+# 新建文件夹
+osascript -e 'tell application "Finder" to make new folder at (POSIX file "/Users/flychen/Desktop") with properties {name:"NewFolder"}'
 ```
 
 ---
 
-## 操作闭环流程
+## 飞书手机控制指令
 
-### 标准操作流程：观察 → 操作 → 验证
+在飞书发消息给 Hermes：
 
-```
-1. 截屏观察当前状态
-   screencapture -x ~/.openclaw/workspace/state-before.png
-
-2. 分析截图，确定目标位置
-   image 工具分析
-
-3. 执行操作
-   click / keystroke / activate
-
-4. 截屏验证操作结果
-   screencapture -x ~/.openclaw/workspace/state-after.png
-
-5. 分析验证结果
-   image 工具分析
-```
+| 指令 | 效果 |
+|------|------|
+| `查看微信第一个对话` | 切换微信 → 截屏 → 告诉你第一个聊天对象 |
+| `截图桌面` | 截屏当前桌面状态 |
+| `切换到 Chrome` | 激活 Chrome 浏览器 |
+| `打开下载文件夹` | Finder 打开 Downloads |
+| `列出所有窗口` | 显示当前打开的所有应用 |
 
 ---
 
 ## 使用示例
 
-### 示例 1：切换到 Finder 并搜索文件
+### 示例 1：查看微信第一个对话
 
 ```bash
-# 1. 切换应用
-osascript -e 'tell application "Finder" to activate'
-sleep 1
-
-# 2. 打开搜索框 (Cmd+F)
-osascript -e 'tell application "System Events" to keystroke "f" using command down'
-sleep 1
-
-# 3. 输入搜索词
-osascript -e 'tell application "System Events" to keystroke "hermes"'
-
-# 4. 截屏验证
-screencapture -x ~/.openclaw/workspace/result.png
-# 使用 image 工具分析验证
+# 闭环操作流程
+1. osascript -e 'tell application "WeChat" to activate' && sleep 2
+2. screencapture ~/.openclaw/workspace/wechat.png
+3. image 工具分析：左侧聊天列表第一个是谁
+4. 返回结果："第一个对话是「打碎焦虑」"
 ```
 
-### 示例 2：查看微信第一个对话
+### 示例 2：在 Chrome 搜索
 
 ```bash
-# 1. 切换到微信
-osascript -e 'tell application "WeChat" to activate'
-sleep 1
-
-# 2. 截屏
-screencapture -x ~/.openclaw/workspace/wechat.png
-
-# 3. 视觉理解第一个对话对象
-# image 工具分析左侧对话列表
+1. osascript -e 'tell application "Google Chrome" to activate'
+2. osascript -e 'tell application "System Events" to keystroke "l" using command down'  # Cmd+L
+3. osascript -e 'tell application "System Events" to keystroke "https://google.com/search?q=hermes"'
+4. osascript -e 'tell application "System Events" to key code 36'  # 回车
+5. 截屏验证
 ```
 
-### 示例 3：在浏览器中点击某个链接
+### 示例 3：滚动聊天列表
 
 ```bash
-# 1. 切换到 Chrome
-osascript -e 'tell application "Google Chrome" to activate'
-sleep 1
+# 回到顶部
+osascript -e 'tell application "System Events" to key code 126 using command down'  # Cmd+Up
 
-# 2. 截屏确定链接位置
-screencapture -x ~/.openclaw/workspace/chrome-before.png
-
-# 3. 分析截图，找到链接坐标
-
-# 4. 点击
-osascript -e 'tell application "System Events" to click at {500, 300}'
-
-# 5. 截屏验证
-screencapture -x ~/.openclaw/workspace/chrome-after.png
+# 滚动到底部
+osascript -e 'tell application "System Events" to key code 125 using command down'  # Cmd+Down
 ```
 
 ---
 
 ## 常见问题
 
-### Q: 截屏看不到微信窗口内容
-A: 确保微信窗口在前台且未被遮挡，先 `activate` 再截屏
-
-### Q: 点击位置不准
-A: 坐标系从左上角 (0,0) 开始，先用截屏确定准确位置
-
-### Q: 中文输入乱码
-A: 用剪贴板中转：`echo "中文" | pbcopy` → `Cmd+V`
-
-### Q: 权限弹窗阻止操作
-A: 去系统设置授权，然后重试
+| 问题 | 解决方案 |
+|------|----------|
+| 截屏看不到目标窗口 | 先 `activate`，等待 2 秒再截屏 |
+| 点击位置不准 | 先截屏定位，确认坐标后再点击 |
+| 中文输入乱码 | 用 `pbcopy` + `Cmd+V` 中转 |
+| 权限弹窗阻止 | 去系统设置授权，然后重试 |
+| 微信窗口最小化 | 用 `Cmd+0` 强制显示主窗口 |
 
 ---
 
 ## 安全提示
 
-- GUI 操作会真实改变你的桌面，请确认命令后再执行
-- 敏感操作（删除、发送消息等）建议先询问
-- 操作后用截屏验证结果
+- ⚠️ GUI 操作会真实改变你的桌面，请确认命令后再执行
+- ⚠️ 敏感操作（删除、发送消息、转账等）建议先询问用户
+- ✅ 操作后用截屏验证结果
+- ✅ 重要操作记录到 memory/runtime/
 
 ---
 
-## 技术实现
+## 技术架构
 
-- **截屏**：`screencapture` 命令
-- **视觉理解**：OpenClaw `image` 工具 + 视觉模型
-- **点击/键盘**：AppleScript `System Events`
-- **窗口管理**：AppleScript `tell application`
+```
+┌─────────────────────────────────────────────┐
+│         Harness GUI Agent Stack             │
+├─────────────────────────────────────────────┤
+│                                             │
+│  hermes-agent (飞书控制)                     │
+│      ↓                                      │
+│  macos-gui-automation (SKILL.md)            │
+│      ↓                                      │
+│  ┌─────────────────────────────────────┐    │
+│  │ AppleScript/osascript               │    │
+│  │   - click, keystroke, activate      │    │
+│  │   - window query, process control   │    │
+│  └─────────────────────────────────────┘    │
+│      ↓                                      │
+│  screencapture + image tool                 │
+│      ↓                                      │
+│  visual understanding + verification        │
+└─────────────────────────────────────────────┘
+```
 
 ---
 
-## 更新记录
+## 进化记录
 
-| 版本 | 日期 | 变更 |
-|------|------|------|
-| 2.0.0 | 2026-05-26 | 添加闭环验证流程，所有能力已实测验证 |
-| 1.0.0 | 2026-05-25 | 初始版本 |
+| 版本 | 日期 | 变更 | 验证状态 |
+|------|------|------|----------|
+| 2.1.0 | 2026-05-26 | 适配 Harness 框架，添加 hermes metadata | ✅ 已验证 |
+| 2.0.0 | 2026-05-26 | 添加闭环验证流程 | ✅ 已验证 |
+| 1.0.0 | 2026-05-25 | 初始版本 | ✅ 基础功能 |
+
+---
 
 ## 相关 Skills
 
-- browser-automation: 浏览器专用自动化
-- apple-notes: Apple Notes 操作
-- apple-reminders: Apple Reminders 操作
+- **browser-automation**: 浏览器专用自动化（Playwright）
+- **apple-notes**: Apple Notes 操作
+- **apple-reminders**: Apple Reminders 操作
+- **web-research**: 网络研究与搜索

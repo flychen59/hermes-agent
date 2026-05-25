@@ -1,0 +1,27 @@
+{
+  "name": "gui-agent",
+  "description": "桌面 GUI 控制 Agent — 视觉理解 + 操作执行 + 结果验证",
+  "version": "1.0.0",
+  "priority": "high",
+  "skills": [
+    "macos-gui-automation",
+    "browser-automation"
+  ],
+  "capabilities": [
+    "截屏视觉理解",
+    "点击操作",
+    "键盘输入",
+    "窗口管理",
+    "应用切换",
+    "操作验证"
+  ],
+  "limits": {
+    "敏感操作需确认": true,
+    "每次操作后验证": true,
+    "最大连续操作次数": 10
+  },
+  "runtime": {
+    "screen_cache_dir": "~/.openclaw/workspace",
+    "operation_history_max": 100
+  }
+}

@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """Agent & Skill Manager — 统一管理入口
 
+支持 GUI Agent 管理：
+  python agents/manage.py gui list-apps
+  python agents/manage.py gui screenshot
+  python agents/manage.py gui activate <app>
+  python agents/manage.py gui operation <operation>
+
 提供 CLI 和编程接口：
   python agents/manage.py skill list
   python agents/manage.py skill create <name> --desc "..."
@@ -25,9 +31,89 @@ SHARED_SKILLS_DIR = AGENTS_DIR / "shared-skills"
 AGENT_REGISTRY_DIR = AGENTS_DIR / "agent-registry"
 KNOWLEDGE_DIR = AGENTS_DIR / "knowledge"
 RUNTIME_DIR = AGENTS_DIR / "memory" / "runtime"
+WORKSPACE_DIR = Path.home() / ".openclaw" / "workspace"
 
 
 # ── Skill 管理 ──────────────────────────────────────────────
+
+# ── GUI Agent 专用命令 ────────────────────────────────────────
+
+def gui_list_apps() -> Dict:
+    """列出所有可见应用"""
+    import subprocess
+    result = subprocess.run(
+        ['osascript', '-e', 'tell application "System Events" to get name of every process whose background only is false'],
+        capture_output=True, text=True
+    )
+    apps = [app.strip() for app in result.stdout.strip().split(',') if app.strip()]
+    frontmost = subprocess.run(
+        ['osascript', '-e', 'tell application "System Events" to get name of first process whose frontmost is true'],
+        capture_output=True, text=True
+    ).stdout.strip()
+    return {
+        "apps": apps,
+        "frontmost": frontmost,
+        "total": len(apps)
+    }
+
+def gui_screenshot(output_path: str = None) -> Dict:
+    """截屏"""
+    import subprocess
+    from datetime import datetime
+    
+    if not output_path:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_path = WORKSPACE_DIR / f"screen_{timestamp}.png"
+    else:
+        output_path = Path(output_path)
+    
+    subprocess.run(['screencapture', str(output_path)], capture_output=True)
+    return {
+        "path": str(output_path),
+        "exists": output_path.exists(),
+        "size": output_path.stat().st_size if output_path.exists() else 0
+    }
+
+def gui_activate_app(app_name: str) -> Dict:
+    """激活应用"""
+    import subprocess
+    result = subprocess.run(
+        ['osascript', '-e', f'tell application "{app_name}" to activate'],
+        capture_output=True, text=True
+    )
+    return {
+        "app": app_name,
+        "success": result.returncode == 0,
+        "error": result.stderr if result.returncode != 0 else None
+    }
+
+def gui_operation(operation: str) -> Dict:
+    """执行 GUI 操作（带 hooks）"""
+    import subprocess
+    
+    # 前置 hook
+    pre_hook = AGENTS_DIR / "hooks" / "pre_gui_hook.py"
+    pre_result = subprocess.run([sys.executable, str(pre_hook), operation], capture_output=True, text=True)
+    
+    if pre_result.returncode != 0:
+        return {
+            "operation": operation,
+            "success": False,
+            "stage": "pre_hook",
+            "error": pre_result.stdout
+        }
+    
+    # 执行操作（这里只是示意，实际操作由 agent 执行）
+    # 后置 hook
+    post_hook = AGENTS_DIR / "hooks" / "post_gui_hook.py"
+    post_result = subprocess.run([sys.executable, str(post_hook), operation], capture_output=True, text=True)
+    
+    return {
+        "operation": operation,
+        "success": post_result.returncode == 0,
+        "stage": "post_hook",
+        "output": post_result.stdout
+    }
 
 def list_skills() -> List[Dict]:
     """列出所有共享 skill"""
@@ -255,6 +341,8 @@ def main():
         _handle_evolve(args[1:])
     elif cmd == "context":
         _handle_context(args[1:])
+    elif cmd == "gui":
+        _handle_gui(args[1:])
     else:
         print(f"Unknown command: {cmd}")
         _print_help()
@@ -279,6 +367,11 @@ Agent & Skill Manager
   
   context get [agent] [key]  读取共享上下文
   context set <agent> <key> <value>  写入共享上下文
+  
+  gui list-apps           列出所有可见应用
+  gui screenshot          截屏当前桌面
+  gui activate <app>      激活应用
+  gui operation <op>      执行 GUI 操作
 """)
 
 
@@ -429,6 +522,54 @@ def _handle_context(args):
     elif sub == "set" and len(args) > 3:
         set_shared_context(args[1], args[2], " ".join(args[3:]))
         print(f"✅ Set {args[1]}/{args[2]}")
+
+
+def _handle_gui(args):
+    """处理 GUI Agent 命令"""
+    if not args or args[0] in ["help", "--help"]:
+        print("GUI Agent 命令:\n  list-apps    列出所有可见应用\n  screenshot   截屏当前桌面\n  activate     激活应用\n  operation    执行 GUI 操作")
+        return
+    
+    cmd = args[0]
+    
+    if cmd == "list-apps":
+        result = gui_list_apps()
+        print(f"前台应用: {result['frontmost']}")
+        print(f"可见应用 ({result['total']}):")
+        for app in result['apps']:
+            prefix = "→ " if app == result['frontmost'] else "  "
+            print(f"{prefix}{app}")
+    
+    elif cmd == "screenshot":
+        output = args[1] if len(args) > 1 else None
+        result = gui_screenshot(output)
+        if result['exists']:
+            print(f"截屏成功: {result['path']}")
+            print(f"文件大小: {result['size']} bytes")
+        else:
+            print("截屏失败")
+    
+    elif cmd == "activate":
+        if len(args) < 2:
+            print("Usage: manage.py gui activate <app_name>")
+            return
+        app_name = args[1]
+        result = gui_activate_app(app_name)
+        if result['success']:
+            print(f"已激活: {app_name}")
+        else:
+            print(f"激活失败: {result['error']}")
+    
+    elif cmd == "operation":
+        if len(args) < 2:
+            print("Usage: manage.py gui operation <operation>")
+            return
+        operation = args[1]
+        result = gui_operation(operation)
+        print(result.get('output', ''))
+    
+    else:
+        print(f"未知 GUI 命令: {cmd}")
 
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@ metadata:
 - `references/agent-orchestration-frameworks.md` — Agent 编排框架调研（Open Multi-Agent/CrewAI/GPT Researcher/ValueCell 等），含推荐架构
 - `references/openclaw-vs-hermes-agent.md` — OpenClaw vs Hermes Agent 对比研究（2026-05），含社区评价、核心差异、安全对比
 - `references/multi-agent-company-frameworks.md` — 多 Agent "AI 公司"框架调研（2026-05），含 CrewAI/MetaGPT/ChatDev/AutoGen 对比 + 自我进化框架 + AI 一人公司角色设计
+- `references/2026-multi-agent-frameworks.md` — 2026 年最新多 Agent 框架（MetaSwarm/SwarmClaw/InfiAgent/MemStack 等），含适配度评估 + 推荐组合方案
 
 ## 使用场景
 - 调研技术方案和 API

@@ -1,0 +1,8 @@
+{
+  "provider": "openai-compat",
+  "model": "glm-5.1",
+  "api_key": "",
+  "base_url": "http://api.halphen.cn/openai/v1",
+  "language": "cn",
+  "operator": "computer"
+}

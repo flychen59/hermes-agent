@@ -1,38 +1,62 @@
 ---
 name: macos-gui-automation
-description: "macOS GUI 自动化控制 — 模拟点击、键盘输入、窗口管理、应用控制、截屏。使用 AppleScript/osascript 实现全系统 GUI 操作。"
-version: 1.0.0
+description: "macOS GUI 自动化控制 — 模拟点击、键盘输入、窗口管理、应用控制、截屏视觉理解闭环。使用 AppleScript/osascript 实现全系统 GUI 操作，支持操作验证。"
+version: 2.0.0
 metadata:
   openclaw:
     emoji: "🖥️"
     os: ["darwin"]
     requires:
-      permissions: ["辅助功能 (Accessibility)"]
-  gitagent:
-    tags: [automation, macos, gui, applescript, desktop-control]
-    author: flychen
-    created: 2026-05-25
+      permissions: ["辅助功能 (Accessibility)", "屏幕录制"]
 ---
 
-# macOS GUI 自动化
+# macOS GUI 自动化（闭环验证版）
 
-通过 AppleScript + exec 工具实现 macOS 全系统 GUI 自动化控制。
+通过 AppleScript + exec + image 工具实现 macOS 全系统 GUI 自动化控制，**支持操作后视觉验证**。
 
 ## 前置要求
 
-**必须授权辅助功能**：
-1. 系统设置 → 隐私与安全性 → 辅助功能
-2. 添加 Terminal.app（或运行 Agent 的应用）
-3. 解锁后勾选启用
+**必须授权两项权限**：
+1. **辅助功能**：系统设置 → 隐私与安全性 → 辅助功能 → 添加 Terminal
+2. **屏幕录制**：系统设置 → 隐私与安全性 → 屏幕录制 → 允许 Terminal
 
 验证授权：
 ```bash
+# 辅助功能测试
 osascript -e 'tell application "System Events" to get name of first process'
+
+# 截屏测试
+screencapture -x ~/.openclaw/workspace/test.png
 ```
+
+---
+
+## 核心能力（已验证 ✅）
+
+| 能力 | 工具 | 状态 |
+|------|------|------|
+| 截屏 | `screencapture` | ✅ 已验证 |
+| 视觉理解 | `image` 工具 | ✅ 已验证 |
+| 点击操作 | AppleScript `click at {x,y}` | ✅ 已验证 |
+| 键盘输入 | AppleScript `keystroke` | ✅ 已验证 |
+| 窗口查询 | AppleScript `get name of every process` | ✅ 已验证 |
+| 应用切换 | AppleScript `activate` | ✅ 已验证 |
+
+---
 
 ## 核心命令
 
-### 1. 窗口管理
+### 1. 截屏 + 视觉理解（闭环验证）
+
+```bash
+# 截屏
+screencapture -x ~/.openclaw/workspace/screen.png
+
+# 视觉理解（AI 分析）
+# 使用 image 工具分析截图
+```
+
+### 2. 窗口管理
 
 ```bash
 # 列出所有可见应用
@@ -41,35 +65,16 @@ osascript -e 'tell application "System Events" to get name of every process whos
 # 获取前台应用
 osascript -e 'tell application "System Events" to get name of first process whose frontmost is true'
 
-# 获取指定应用的窗口列表
-osascript -e 'tell application "System Events" to get name of every window of process "Finder"'
-
-# 获取窗口位置和大小
-osascript -e 'tell application "System Events" to get position of first window of process "Finder"'
-osascript -e 'tell application "System Events" to get size of first window of process "Finder"'
-```
-
-### 2. 应用控制
-
-```bash
-# 打开应用
+# 切换应用
 osascript -e 'tell application "Finder" to activate'
-
-# 打开应用并打开路径
-osascript -e 'tell application "Finder" to open (POSIX file "/Users/flychen/Downloads")'
-osascript -e 'tell application "Finder" to activate'
-
-# 退出应用
-osascript -e 'tell application "Calculator" to quit'
-
-# 隐藏应用
-osascript -e 'tell application "System Events" to set visible of process "Finder" to false'
+osascript -e 'tell application "WeChat" to activate'
+osascript -e 'tell application "Google Chrome" to activate'
 ```
 
 ### 3. 鼠标操作
 
 ```bash
-# 点击坐标 (x, y)
+# 点击坐标 (x, y) - 从左上角开始
 osascript -e 'tell application "System Events" to click at {100, 200}'
 
 # 右键点击
@@ -77,9 +82,6 @@ osascript -e 'tell application "System Events" to right click at {100, 200}'
 
 # 双击
 osascript -e 'tell application "System Events" to double click at {100, 200}'
-
-# 拖拽 (从 {x1,y1} 到 {x2,y2})
-osascript -e 'tell application "System Events" to drag from {100, 100} to {300, 300}'
 ```
 
 ### 4. 键盘操作
@@ -91,13 +93,10 @@ osascript -e 'tell application "System Events" to keystroke "Hello World"'
 # 按键组合 (Cmd+C)
 osascript -e 'tell application "System Events" to keystroke "c" using command down'
 
-# Cmd+V
-osascript -e 'tell application "System Events" to keystroke "v" using command down'
+# Cmd+F 搜索
+osascript -e 'tell application "System Events" to keystroke "f" using command down'
 
-# Cmd+Tab 切换应用
-osascript -e 'tell application "System Events" to keystroke tab using command down'
-
-# 回车键
+# 回车键 (key code 36)
 osascript -e 'tell application "System Events" to key code 36'
 
 # 常用 key code:
@@ -105,110 +104,136 @@ osascript -e 'tell application "System Events" to key code 36'
 # 123 = Left, 124 = Right, 125 = Down, 126 = Up
 ```
 
-### 5. 菜单操作
+### 5. 中文输入（剪贴板中转）
 
 ```bash
-# 点击菜单项
-osascript -e 'tell application "System Events" to tell process "Finder"
-    click menu item "New Finder Window" of menu "File" of menu bar 1
-end tell'
-
-# 点击子菜单
-osascript -e 'tell application "System Events" to tell process "Finder"
-    click menu item "Compress" of menu "File" of menu bar 1
-end tell'
-```
-
-### 6. 截屏
-
-```bash
-# 全屏截屏
-screencapture -x /tmp/screenshot.png
-
-# 指定区域截屏 (x,y,width,height)
-screencapture -R 0,0,800,600 /tmp/screenshot.png
-
-# 窗口截屏 (交互选择)
-screencapture -w /tmp/window.png
-
-# 截屏到剪贴板
-screencapture -c
-```
-
-### 7. 文件操作 (Finder)
-
-```bash
-# 打开路径
-osascript -e 'tell application "Finder" to open (POSIX file "/Users/flychen/Documents")'
-osascript -e 'tell application "Finder" to activate'
-
-# 选择文件
-osascript -e 'tell application "Finder" to select (POSIX file "/Users/flychen/test.txt")'
-
-# 获取选中文件
-osascript -e 'tell application "Finder" to get POSIX path of (selection as alias)'
-
-# 新建文件夹
-osascript -e 'tell application "Finder" to make new folder at (POSIX file "/Users/flychen/Desktop") with properties {name:"NewFolder"}'
-```
-
-## 使用模式
-
-### 模式 1：直接 exec 调用
-
-```
-用户: "帮我打开 Finder 并进入下载文件夹"
-→ exec: osascript -e 'tell application "Finder" to open (POSIX file "/Users/flychen/Downloads")'
-→ exec: osascript -e 'tell application "Finder" to activate'
-```
-
-### 模式 2：多步骤自动化
-
-```
-用户: "在 Chrome 中搜索 OpenClaw"
-→ exec: osascript -e 'tell application "Google Chrome" to activate'
-→ exec: osascript -e 'tell application "System Events" to keystroke "l" using command down'  # Cmd+L 聚焦地址栏
-→ exec: osascript -e 'tell application "System Events" to keystroke "https://google.com/search?q=OpenClaw"'
-→ exec: osascript -e 'tell application "System Events" to key code 36'  # 回车
-```
-
-### 模式 3：状态查询
-
-```
-用户: "当前打开了哪些窗口？"
-→ exec: osascript -e 'tell application "System Events" to get name of every process whose background only is false'
-→ 返回: Terminal, Finder, Chrome, WeChat...
-```
-
-## 常见问题
-
-### Q: 提示 "不允许辅助访问"
-A: 去系统设置 → 隐私与安全性 → 辅助功能 → 添加 Terminal
-
-### Q: 点击坐标不准
-A: 坐标系从左上角 (0,0) 开始，先获取窗口位置再计算相对坐标
-
-### Q: 找不到窗口
-A: 先用 `get name of every window of process "xxx"` 确认窗口名称
-
-### Q: 中文输入乱码
-A: AppleScript 对中文支持有限，建议用剪贴板中转：
-```bash
+# 先复制到剪贴板
 echo "中文内容" | pbcopy
+
+# 再粘贴
 osascript -e 'tell application "System Events" to keystroke "v" using command down'
 ```
 
+---
+
+## 操作闭环流程
+
+### 标准操作流程：观察 → 操作 → 验证
+
+```
+1. 截屏观察当前状态
+   screencapture -x ~/.openclaw/workspace/state-before.png
+
+2. 分析截图，确定目标位置
+   image 工具分析
+
+3. 执行操作
+   click / keystroke / activate
+
+4. 截屏验证操作结果
+   screencapture -x ~/.openclaw/workspace/state-after.png
+
+5. 分析验证结果
+   image 工具分析
+```
+
+---
+
+## 使用示例
+
+### 示例 1：切换到 Finder 并搜索文件
+
+```bash
+# 1. 切换应用
+osascript -e 'tell application "Finder" to activate'
+sleep 1
+
+# 2. 打开搜索框 (Cmd+F)
+osascript -e 'tell application "System Events" to keystroke "f" using command down'
+sleep 1
+
+# 3. 输入搜索词
+osascript -e 'tell application "System Events" to keystroke "hermes"'
+
+# 4. 截屏验证
+screencapture -x ~/.openclaw/workspace/result.png
+# 使用 image 工具分析验证
+```
+
+### 示例 2：查看微信第一个对话
+
+```bash
+# 1. 切换到微信
+osascript -e 'tell application "WeChat" to activate'
+sleep 1
+
+# 2. 截屏
+screencapture -x ~/.openclaw/workspace/wechat.png
+
+# 3. 视觉理解第一个对话对象
+# image 工具分析左侧对话列表
+```
+
+### 示例 3：在浏览器中点击某个链接
+
+```bash
+# 1. 切换到 Chrome
+osascript -e 'tell application "Google Chrome" to activate'
+sleep 1
+
+# 2. 截屏确定链接位置
+screencapture -x ~/.openclaw/workspace/chrome-before.png
+
+# 3. 分析截图，找到链接坐标
+
+# 4. 点击
+osascript -e 'tell application "System Events" to click at {500, 300}'
+
+# 5. 截屏验证
+screencapture -x ~/.openclaw/workspace/chrome-after.png
+```
+
+---
+
+## 常见问题
+
+### Q: 截屏看不到微信窗口内容
+A: 确保微信窗口在前台且未被遮挡，先 `activate` 再截屏
+
+### Q: 点击位置不准
+A: 坐标系从左上角 (0,0) 开始，先用截屏确定准确位置
+
+### Q: 中文输入乱码
+A: 用剪贴板中转：`echo "中文" | pbcopy` → `Cmd+V`
+
+### Q: 权限弹窗阻止操作
+A: 去系统设置授权，然后重试
+
+---
+
 ## 安全提示
 
-- GUI 自动化会真实操作你的电脑，请确认命令后再执行
-- 敏感操作（删除、发送等）建议先询问用户
-- 可用 `--dry-run` 模式先预览（需要自行实现）
+- GUI 操作会真实改变你的桌面，请确认命令后再执行
+- 敏感操作（删除、发送消息等）建议先询问
+- 操作后用截屏验证结果
 
-## 进化记录
+---
 
-| 日期 | 版本 | 变更 |
+## 技术实现
+
+- **截屏**：`screencapture` 命令
+- **视觉理解**：OpenClaw `image` 工具 + 视觉模型
+- **点击/键盘**：AppleScript `System Events`
+- **窗口管理**：AppleScript `tell application`
+
+---
+
+## 更新记录
+
+| 版本 | 日期 | 变更 |
 |------|------|------|
-| 2026-05-25 | 1.0.0 | 初始版本，支持基础 GUI 操作 |
+| 2.0.0 | 2026-05-26 | 添加闭环验证流程，所有能力已实测验证 |
+| 1.0.0 | 2026-05-25 | 初始版本 |
 
 ## 相关 Skills
 

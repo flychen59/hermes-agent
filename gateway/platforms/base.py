@@ -1000,6 +1000,12 @@ def merge_pending_message_event(
 ) -> None:
     """Store or merge a pending event for a session.
 
+    Supports OpenClaw-style collect mode: when merge_text is enabled and
+    multiple text messages arrive, they are structured as a numbered list
+    ("Queued #1: ...\\nQueued #2: ...") instead of simple concatenation.
+    Includes capacity management (cap=20, summarize drop policy) and
+    deduplication by message_id.
+
     Photo bursts/albums often arrive as multiple near-simultaneous PHOTO
     events. Merge those into the existing queued event so the next turn sees
     the whole burst.
@@ -1009,6 +1015,18 @@ def merge_pending_message_event(
     follow-ups so a multi-part user thought is not silently truncated to only
     the last queued fragment.
     """
+    # --- Dedup: skip if we've already seen this message_id ---
+    msg_id = getattr(event, "message_id", None)
+    if msg_id:
+        seen_key = _DEDUPE_SENTINEL + session_key
+        seen: set = pending_messages.get(seen_key, set())
+        if msg_id in seen:
+            return  # duplicate, skip
+        seen.add(msg_id)
+        if len(seen) > 100:
+            seen = set(list(seen)[-50:])
+        pending_messages[seen_key] = seen
+
     existing = pending_messages.get(session_key)
     if existing:
         existing_is_photo = getattr(existing, "message_type", None) == MessageType.PHOTO
@@ -1042,10 +1060,44 @@ def merge_pending_message_event(
             and event.message_type == MessageType.TEXT
         ):
             if event.text:
-                existing.text = f"{existing.text}\n{event.text}" if existing.text else event.text
+                # OpenClaw-style collect: use structured numbered list
+                collect_key = _COLLECT_SENTINEL + session_key
+                items: list = list(pending_messages.get(collect_key, []))
+                if not items and existing.text:
+                    items.append(existing.text)
+                items.append(event.text)
+                # Capacity management: cap=20, summarize drop policy
+                if len(items) > 20:
+                    dropped = len(items) - 20
+                    items = [f"[{dropped} earlier messages summarized]"] + items[dropped:]
+                pending_messages[collect_key] = items
+                # Build numbered prompt
+                if len(items) > 1:
+                    parts = []
+                    for i, item in enumerate(items, 1):
+                        t = item[:500] + "..." if len(item) > 500 else item
+                        parts.append(f"Queued #{i}: {t}")
+                    existing.text = "\n".join(parts)
+                else:
+                    existing.text = items[0] if items else ""
             return
 
     pending_messages[session_key] = event
+
+
+# Sentinel keys for storing collect items and dedupe sets in pending_messages dict.
+# Using string prefixes avoids collision with session_key values.
+_COLLECT_SENTINEL = "__collect__:"
+_DEDUPE_SENTINEL = "__dedupe__:"
+
+
+def clear_collect_state(pending_messages: Dict[str, MessageEvent], session_key: str) -> None:
+    """Clear collect and dedupe metadata for a session (call on dequeue/reset)."""
+    keys_to_remove = [k for k in pending_messages
+                      if k == _COLLECT_SENTINEL + session_key
+                      or k == _DEDUPE_SENTINEL + session_key]
+    for k in keys_to_remove:
+        pending_messages.pop(k, None)
 
 
 # Error substrings that indicate a transient *connection* failure worth retrying.
@@ -2407,7 +2459,7 @@ class BasePlatformAdapter(ABC):
 
             # Default behavior for non-photo follow-ups: interrupt the running agent
             logger.debug("[%s] New message while session %s is active — triggering interrupt", self.name, session_key)
-            self._pending_messages[session_key] = event
+            merge_pending_message_event(self._pending_messages, session_key, event, merge_text=True)
             # Signal the interrupt (the processing task checks this)
             self._active_sessions[session_key].set()
             return  # Don't process now - will be handled after current task finishes

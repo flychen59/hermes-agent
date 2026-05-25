@@ -1871,7 +1871,7 @@ class GatewayRunner:
         adapter = self.adapters.get(event.source.platform)
         if not adapter:
             return
-        merge_pending_message_event(adapter._pending_messages, session_key, event)
+        merge_pending_message_event(adapter._pending_messages, session_key, event, merge_text=True)
 
     async def _handle_active_session_busy_message(self, event: MessageEvent, session_key: str) -> bool:
         # --- Draining case (gateway restarting/stopping) ---
@@ -1931,7 +1931,7 @@ class GatewayRunner:
         # successful steer — the text already landed inside the run and
         # must NOT also be replayed as a next-turn user message.
         if not steered:
-            merge_pending_message_event(adapter._pending_messages, session_key, event)
+            merge_pending_message_event(adapter._pending_messages, session_key, event, merge_text=True)
 
         is_queue_mode = effective_mode == "queue"
         is_steer_mode = effective_mode == "steer"

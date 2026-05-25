@@ -43,9 +43,14 @@ SUMMARY_PREFIX = (
     "they were already addressed. "
     "Your current task is identified in the '## Active Task' section of the "
     "summary — resume exactly from there. "
-    "Respond ONLY to the latest user message "
-    "that appears AFTER this summary. The current session state (files, "
-    "config, etc.) may reflect work described here — avoid repeating it:"
+    "IMPORTANT: Check the '## Pending User Asks' section for any unanswered "
+    "user questions or requests that were interrupted. You MUST address those "
+    "before responding to the latest user message. If a pending ask is "
+    "relevant to the latest message, handle them together. "
+    "Respond to the latest user message that appears AFTER this summary, "
+    "but also address any accumulated pending asks from the summary. "
+    "The current session state (files, config, etc.) may reflect work "
+    "described here — avoid repeating it:"
 )
 LEGACY_SUMMARY_PREFIX = "[CONTEXT SUMMARY]:"
 

@@ -25,5 +25,23 @@
     },
     "attempt": 1,
     "status": "success"
+  },
+  {
+    "timestamp": "2026-05-26T03:43:39.386627",
+    "operation": {
+      "type": "activate",
+      "app": "WeChat"
+    },
+    "attempt": 1,
+    "status": "success"
+  },
+  {
+    "timestamp": "2026-05-26T03:44:22.651365",
+    "operation": {
+      "type": "activate",
+      "app": "WeChat"
+    },
+    "attempt": 1,
+    "status": "success"
   }
 ]

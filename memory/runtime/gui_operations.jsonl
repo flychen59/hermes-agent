@@ -6,3 +6,5 @@
 {"timestamp": "2026-05-26T01:25:55.220767", "operation": "\u6fc0\u6d3b Runner", "success": true, "details": {"after_screen": "/Users/flychen/.openclaw/workspace/gui_verify_20260526_012554.png", "before_screen": null, "frontmost_app": "App Store", "capture_success": true}, "hook": "post_gui_hook"}
 {"timestamp": "2026-05-26T01:26:21.493879", "operation": "\u6fc0\u6d3b WeChat", "classification": "unknown", "hook": "pre_gui_hook"}
 {"timestamp": "2026-05-26T01:26:28.434488", "operation": "\u6fc0\u6d3b WeChat", "success": true, "details": {"after_screen": "/Users/flychen/.openclaw/workspace/gui_verify_20260526_012628.png", "before_screen": null, "frontmost_app": "App Store", "capture_success": true}, "hook": "post_gui_hook"}
+{"timestamp": "2026-05-26T03:44:18.496732", "operation": "\u6fc0\u6d3b WeChat", "classification": "unknown", "hook": "pre_gui_hook"}
+{"timestamp": "2026-05-26T03:44:25.499151", "operation": "\u6fc0\u6d3b WeChat", "success": true, "details": {"after_screen": "/Users/flychen/.openclaw/workspace/gui_verify_20260526_034425.png", "before_screen": null, "frontmost_app": "App Store", "capture_success": true}, "hook": "post_gui_hook"}

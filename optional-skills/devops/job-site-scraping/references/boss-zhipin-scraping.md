@@ -82,6 +82,47 @@ a[href*="/job_detail/"]  /* 详情页链接 */
 .job-detail-section  /* JD 正文（备选） */
 ```
 
+## 经验筛选（重要陷阱）
+
+**URL 参数方式会失败**：
+```
+# ❌ 不要这样用——会触发登录弹窗
+https://www.zhipin.com/web/geek/job?query=AI+Agent&city=100010000&experience=104
+```
+
+**正确方式——JS 点击页面筛选标签**：
+```python
+clicked = page.evaluate("""(() => {
+    let links = document.querySelectorAll('a, li, span, div');
+    for (let el of links) {
+        let text = el.innerText.trim();
+        if (text === '1-3年' || text === '1-3 年') {
+            el.click();
+            return 'clicked: ' + text;
+        }
+    }
+    return 'not found';
+})()""")
+```
+
+经验筛选标签文本对照：
+- `经验不限`
+- `1年以内`
+- `1-3年`
+- `3-5年`
+- `5-10年`
+- `10年以上`
+
+## JD 截断处理
+
+未登录状态下 JD 末尾有"登录查看完整内容"文字：
+```python
+# 在 JS 提取时清理
+text = text.replace(/登录查看完整内容.*/g, '').trim()
+```
+
+截断后的内容无法恢复，只能获取可见部分。完整 JD 需要登录状态。
+
 ## 注意事项
 
 1. **page.go_back() 会超时**：BOSS直聘是 SPA，go_back 触发 30s timeout。用 `page.goto(search_url)` 代替

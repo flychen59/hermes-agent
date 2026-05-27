@@ -264,11 +264,29 @@ osascript -e 'tell application "System Events" to key code 125 using command dow
 - 目标应用有弹窗/权限对话框时会阻塞
 - 解决：优先用 browser_navigate 操作网页，System Events 作最后手段
 
-### 5. Chrome AppleScript JS 默认关闭
+### 6. Chrome AppleScript JS 默认关闭
 - 需手动开启「查看 → 开发者 → 允许 Apple 事件中的 JavaScript」
+- **注意 macOS 中文 Chrome 菜单是「显示」不是「查看」**
+- 菜单路径：`menu bar item "显示" → menu "显示" → menu item "开发者" → menu "开发者" → menu item "允许 Apple 事件中的 JavaScript"`
 - 未开启返回错误码 12
+- 可用 AppleScript 自动点击菜单开启：
+```applescript
+tell application "Google Chrome" to activate
+delay 0.3
+tell application "System Events"
+    tell process "Google Chrome"
+        click menu bar item "显示" of menu bar 1
+        delay 0.3
+        click menu item "开发者" of menu "显示" of menu bar item "显示" of menu bar 1
+        delay 0.3
+        click menu item "允许 Apple 事件中的 JavaScript" of menu "开发者" of menu item "开发者" of menu "显示" of menu bar item "显示" of menu bar 1
+    end tell
+end tell
+```
+- 开启后可能需要重启 Chrome 才生效（实测有时不用）
 
-### 6. screencapture vs browser_vision 不可混用
+- **screencapture -R x,y,w,h 和 -l windowID 均可能失败**：实测 `screencapture -R` 报 "could not create image from rect"，`screencapture -l` 报 "could not create image from window"。只能用 `screencapture -x` 全屏截取（但 Retina OCR 有问题），或用 patchright `page.screenshot()`
+- **screencapture vs browser_vision 不可混用**
 - `screencapture` → 本地桌面（受窗口遮挡影响）
 - `browser_vision` → 云端无头浏览器（和本地 Chrome 完全独立）
 - 操作本地应用必须用 `screencapture`
@@ -434,11 +452,13 @@ swiftc scripts/ocr.swift -o /tmp/ocr -framework Vision -framework AppKit -framew
   ```bash
   [ -f /tmp/ocr ] || swiftc ~/.hermes/skills/macos-gui-automation/scripts/ocr.swift -o /tmp/ocr -framework Vision -framework AppKit -framework CoreImage
   ```
-- **Retina 截图**：`screencapture` 在 Retina 屏上生成超大 PNG（8MB+，2940×1912），Swift OCR 处理可能无输出
-  - 解决：先用 `sips -Z 1440 /tmp/screen.png --out /tmp/screen_s.png` 缩小再 OCR
-  - 或用 `screencapture -R x,y,w,h` 只截目标区域（避免全屏）
+- **Retina 截图 OCR 空输出**：`screencapture` 在 Retina 屏上生成超大 PNG（8MB+，2940×1912），即使 `sips -Z 1440` 缩小后 Swift Vision OCR **仍返回空字符串**
+  - `screencapture -x` 全屏 + sips 缩小 → OCR 空
+  - `screencapture -R x,y,w,h` → "could not create image from rect" 失败
+  - `screencapture -l windowID` → "could not create image from window" 失败
+  - **解决方案**：用 patchright/Playwright 的 `page.screenshot()` 截图（输出标准分辨率如 1280x800），OCR 正常
 - **OCR 对闲鱼等自定义字体/图标几乎无效**：大量乱码，无法精确定位按钮
-- **OCR 空输出时**：检查图片是否过大（用 `ls -la` 和 `sips -g pixelWidth`），先缩小重试
+- **OCR 空输出时**：先确认截图来源。screencapture 的 Retina 截图即使用 sips 缩小 OCR 也可能空，改用 patchright screenshot
 
 ## 技术架构
 

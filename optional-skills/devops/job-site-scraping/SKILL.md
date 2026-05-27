@@ -52,11 +52,12 @@ npx cloakbrowser install  # 或确认 ~/.cache/rod/browser/chromium-* 存在
 python3 ~/.hermes/skills/devops/job-site-scraping/templates/job-search-scraper.py
 ```
 
-### 3. 反爬绕过策略（按优先级）
+### 4. 反爬绕过策略（按优先级）
 
 | 策略 | 适用场景 | 说明 |
 |------|---------|------|
 | **先访问首页** | BOSS直聘 | 直接搜深层URL触发验证码，先 goto 首页建 session 再搜可绕过 |
+| **页面上点筛选器** | BOSS直聘经验/城市筛选 | URL参数 `experience=104` 等会触发登录墙，应用 JS `page.evaluate` 点击页面上的筛选标签 |
 | **headless=False + 手动验证** | 所有极严网站 | 弹出浏览器让用户手动过验证码，脚本轮询检测 |
 | **OCR 辅助** | 需要视觉识别时 | patchright screenshot + Swift OCR 识别页面内容 |
 
@@ -104,8 +105,9 @@ https://www.zhipin.com/web/geek/job?query={keyword}&city={city_code}
 1. **直接访问搜索 URL 必触发验证码**，但先 `page.goto("https://www.zhipin.com/")` 再搜索可绕过
 2. 搜索页可能跳转到「全国招聘」页（title 含"全国招聘"），但内容包含搜索结果
 3. `page.go_back()` 在 SPA 页面会超时，用 `page.goto(SEARCH_URL)` 代替
-4. 详情页 JD 可能有「登录查看完整内容」截断
-5. 职位列表每页约 15-30 个，可翻页
+4. 详情页 JD 可能有「登录查看完整内容」截断——用 JS `.replace(/登录查看完整内容.*/g, '')` 清理
+5. 职位列表每页约 15-30 个，可滚动加载或翻页
+6. **经验筛选不要用 URL 参数**：`experience=104` 等参数会触发登录弹窗，应通过 JS 点击页面上的筛选标签：`page.evaluate("...el.click()...")`
 
 ### 完整脚本模板
 

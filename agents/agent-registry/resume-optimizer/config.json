@@ -1,0 +1,58 @@
+{
+  "name": "resume-optimizer",
+  "description": "多Agent协作简历优化系统 - JD解析→差距分析→重写→数值审核→质量闭环",
+  "version": "1.0.0",
+  "agents": [
+    {
+      "id": "jd-parser",
+      "role": "JD解析师",
+      "goal": "从岗位描述中提取结构化的技能要求、经验要求和关键指标",
+      "backstory": "你是一位资深猎头，擅长快速从JD中提取核心需求，识别显性和隐性要求",
+      "skills": ["keyword_extractor"]
+    },
+    {
+      "id": "resume-analyst",
+      "role": "简历分析师",
+      "goal": "全面诊断简历的结构、内容质量、数值合理性和岗位匹配度",
+      "backstory": "你是一位严谨的简历审核专家，能快速发现简历中的薄弱环节和优化空间",
+      "skills": []
+    },
+    {
+      "id": "gap-analyzer",
+      "role": "差距分析师",
+      "goal": "对比JD需求和简历现状，识别差距并按优先级排序，制定优化方向",
+      "backstory": "你是一位战略分析专家，擅长在候选人背景和岗位需求之间找到最佳匹配策略",
+      "skills": ["gap_analyzer"]
+    },
+    {
+      "id": "resume-writer",
+      "role": "简历重写师",
+      "goal": "基于优化方向文档，用STAR法则重写简历内容，嵌入关键词，量化成果",
+      "backstory": "你是一位顶级简历撰写专家，擅长将技术经历转化为打动面试官的故事",
+      "skills": ["star_method_writer", "resume_formatter"]
+    },
+    {
+      "id": "data-reviewer",
+      "role": "数值审核员",
+      "goal": "校验简历中所有数值的合理性，结合论文和行业实验数据验证",
+      "backstory": "你是一位数据科学家，对论文数据了如指掌，能快速判断数值是否在合理理论范围内",
+      "skills": ["data_validator"]
+    }
+  ],
+  "flow": {
+    "type": "dag",
+    "nodes": ["jd-parser", "resume-analyst", "gap-analyzer", "resume-writer", "data-reviewer"],
+    "parallel_groups": [["jd-parser", "resume-analyst"]],
+    "edges": [
+      {"from": "jd-parser", "to": "gap-analyzer"},
+      {"from": "resume-analyst", "to": "gap-analyzer"},
+      {"from": "gap-analyzer", "to": "resume-writer"},
+      {"from": "resume-writer", "to": "data-reviewer"}
+    ],
+    "loop": {
+      "condition": "审核不通过",
+      "target": "resume-writer",
+      "max_retries": 3
+    }
+  }
+}

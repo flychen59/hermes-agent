@@ -144,6 +144,15 @@ GitHub: flychen59/ai-company | flychen59/ai-daily-report
 • 数据源：GitHub Trending API + DuckDuckGo Search，LLM：Kimi-K2.6
 • 每日自动生成HTML日报并发布到GitHub Pages，持续运行3个月+
 
+━━━ 简历优化Agent（resume-optimizer）━━━
+GitHub: flychen59/hermes-agent（agents/agent-registry/resume-optimizer）
+
+多Agent协作的简历优化系统，支持基于实时市场数据的动态优化：
+• 5 Agent流水线：JD解析师→差距分析师→简历重写师→数值审核员→质量闭环
+• 内置岗位动态监控：招聘网站采集器（CloakBrowser反爬绕过BOSS直聘/猎聘）+ GitHub高星日报生成器
+• 数值校验模块：基于论文理论值（GRPO/DPO/VLM/QPS等）自动验证简历数据合理性
+• 6个可复用Skill模块（keyword_extractor/gap_analyzer/star_method_writer/data_validator/resume_formatter/job-site-scraping）
+
 ━━━ MNBVC多模态语料构建 ━━━
 GitHub: flychen59/Arxiv_mllm_mnbvc（⭐1）| flychen59/chinaxivCrawler_mnbvc（⭐3）
 

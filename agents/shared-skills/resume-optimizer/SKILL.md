@@ -92,6 +92,26 @@ JD：[粘贴岗位描述]
 | star_method_writer | skills/ | STAR法则改写模板 |
 | data_validator | skills/ | 数值合理性校验 |
 | resume_formatter | skills/ | 简历格式化输出 |
+| job-site-scraping | external/ | 招聘网站岗位搜索与JD批量抓取（BOSS直聘等） |
+| github-trending | external/ | GitHub高星项目日报自动生成（技术趋势追踪） |
+
+## 岗位动态监控（亮点功能）
+
+系统内置两个信息采集模块，支持实时关注业界动态：
+
+1. **job-site-scraping**：基于CloakBrowser反爬的招聘网站采集器
+   - 绕过BOSS直聘/猎聘反爬，批量搜索岗位+抓取JD
+   - 支持多条件组合搜索（城市+关键词+薪资范围）
+   - 输出结构化JSON（岗位名/公司/JD/薪资/要求）
+   - 可定时运行，监控新增岗位
+
+2. **github-trending**：GitHub高星项目日报生成器
+   - 4 Agent协作（研究员→编辑→分析师→审查员）
+   - 自动发现热门技术方向和新兴工具
+   - 每日生成HTML日报，发布到GitHub Pages
+   - 帮助简历优化师了解最新技术栈和行业趋势
+
+这两个模块让简历优化不再是静态改写，而是**基于实时市场数据**的动态优化。
 
 ## 数值校验参考表
 

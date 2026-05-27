@@ -116,6 +116,14 @@ GitHub: flychen59/ai-company | flychen59/ai-daily-report
 - 基于CrewAI的多Agent协作系统（研究员→编辑→分析师→审查员），自动生成GitHub高星项目日报
 - LLM: Kimi-K2.6，数据源: GitHub Trending + DuckDuckGo，持续运行3个月+，每日发布到GitHub Pages
 
+**简历优化Agent（resume-optimizer）**
+GitHub: flychen59/hermes-agent（agents/agent-registry/resume-optimizer）
+
+- 5 Agent协作的简历优化系统：JD解析→差距分析→STAR重写→数值审核→质量闭环
+- 内置岗位动态监控：招聘网站采集器（CloakBrowser反爬）+ GitHub高星日报生成器
+- 数值校验模块：基于论文理论值自动验证简历数据合理性
+- 6个可复用Skill模块，支持新任务快速接入
+
 **MNBVC多模态语料**
 GitHub: flychen59/Arxiv_mllm_mnbvc（⭐1）| flychen59/chinaxivCrawler_mnbvc（⭐3）
 

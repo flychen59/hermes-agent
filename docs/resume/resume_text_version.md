@@ -93,21 +93,36 @@
 
 ## 开源项目
 
-**Hermes Agent（Nous Research框架贡献者）**
-- 给这个自进化AI Agent框架贡献了15个commit、3000+行代码
-- 做了macOS GUI自动化Agent（操作成功率85%→95%）、反爬浏览器Skill、多Agent共享Skill框架
-- 修复了多轮对话丢消息的关键Bug
+**Hermes Agent（贡献者，fork自NousResearch/hermes-agent）**
+GitHub: flychen59/hermes-agent
+
+给这个自进化AI Agent框架贡献了15个commit、3000+行代码：
+
+- **macOS GUI自动化Agent**：用cliclick+AppleScript+Swift OCR搭了一套桌面自动化的闭环系统，能截屏看结果、出错自动恢复、速度优化，操作成功率从85%提到95%
+- **反爬浏览器自动化**：基于Patchright/CloakBrowser，绕过BOSS直聘、猎聘的反爬机制，支持验证码处理和多条件批量搜索
+- **闲鱼/淘宝平台自动化**：解决了淘宝登录页用JS给input设值但不触发前端框架状态更新的坑（最终用execCommand insertText方案解决），实测记录了iOS App在macOS上0窗口无法操控的限制和闲鱼反爬策略
+- **多Agent共享Skill框架**：设计了Skill进化引擎，Agent能自动从复杂任务里提取可复用工作流，持久化为Skill供下次调用
+- **修复多轮对话丢消息**：消息合并、去重、上下文压缩策略
 
 **AI日报生成器**
+GitHub: flychen59/ai-company | flychen59/ai-daily-report
+
 - 用4个AI Agent协作（研究员→编辑→分析师→审查员），自动生成GitHub高星项目日报
-- 基于CrewAI框架，持续运行3个月+，每日自动发布
+- 基于CrewAI多Agent编排框架，LLM用Kimi-K2.6，数据源GitHub Trending + DuckDuckGo
+- 持续运行3个月+，每日自动发布HTML日报到GitHub Pages
 
 **MNBVC多模态语料**
-- 构建Arxiv论文的多模态结构化数据库，用Ray分布式处理2000+篇论文
-- GitHub ⭐3
+GitHub: flychen59/Arxiv_mllm_mnbvc（⭐1）| flychen59/chinaxivCrawler_mnbvc（⭐3）
 
-**OpenClaw Agent框架**
-- 独立部署运维，接入飞书Bot + 多模型provider + MCP Server + Skill插件系统
+- 构建Arxiv论文的多模态结构化数据库（LaTeX→JSON），用Ray分布式处理2000+篇论文
+- 提取图片、表格、公式等多模态数据，按排版顺序存为Parquet，吞吐量50文件/分钟
+
+**OpenClaw Agent框架（自建部署）**
+
+- 独立部署运维OpenClaw Agent，接入飞书Bot消息路由
+- 多模型provider热切换（Qwen3.5-plus、GLM-5.1、Kimi-K2.5、MiniMax-M2.5）
+- 配置MCP Server（Streamable HTTP）和Skill插件系统
+- 编写SOUL.md行为准则（集成Karpathy编码哲学）和USER.md用户画像
 
 ---
 

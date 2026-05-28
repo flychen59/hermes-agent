@@ -42,6 +42,12 @@ GitHub: github.com/flychen59
 - 方案：构造参数缺失、参数错位、城市歧义、品牌词识别、多轮参数继承6类hard case共2000+条，采用课程学习策略从易到难训练
 - 结果：参数完整率从78%提升至91%（+13pp），因重试减少单次调用耗时从1.8s降至1.3s（-28%）
 
+**多模态Agent：地图App截屏理解与视觉工具调用**
+- 问题：纯文本Agent无法理解用户上传的截图（如好友分享的位置截图、商家门头照片、App页面截图），导致多模态输入场景下工具调用准确率低（仅61%），需依赖人工客服兜底
+- 方案：基于Qwen2.5-VL-7B，设计视觉理解→工具调用联合训练Pipeline：(1) 截屏Grounding阶段：参考ShowUI/OS-Atlas方案，训练模型从截屏中定位POI名称、地址文本、地图标注等关键元素（统一表征为bbox+文本对）；(2) Tool Use SFT阶段：将视觉理解结果与地图工具参数对齐，构造"截图→工具调用"的SFT数据（标注1.2w条截屏-工具对）；(3) 视觉GRPO阶段：将GRPO奖励函数扩展到多模态场景，新增视觉grounding准确率维度（5维→6维），对截屏理解-工具调用联合策略进行强化学习优化
+- 结果：截屏场景工具调用准确率从61%提升至82%（+21pp），截屏POI识别F1达87.3%，多模态输入场景覆盖率从12%提升至35%；联合训练相比pipeline方案（先OCR再调Agent）准确率高8.3%，与Mimir论文结论一致
+- 训练配置：4×A800，LoRA rank=64，视觉编码器冻结仅训练投影层+LLM backbone
+
 **工程支撑：**
 - ReAct多步推理框架：Router区分快速查询（P90<800ms）与DeepSearch（平均3.2步，P90<4.5s），GRPO训练后推理步数从3.8步降至3.2步（-16%），端到端延迟降低约12%
 - 路线规划链路：构建"API召回→语义选点→路线重算排序"三阶段，路线采纳率较基线提升15%
@@ -145,6 +151,13 @@ GitHub: flychen59/Arxiv_mllm_mnbvc（⭐1）| flychen59/chinaxivCrawler_mnbvc（
 - 独立部署运维，飞书Bot消息路由+多模型provider热切换（Qwen3.5-plus/GLM-5.1/Kimi-K2.5/MiniMax-M2.5）
 - MCP Server（Streamable HTTP）+ Skill插件系统 + SOUL.md行为准则
 
+**多模态Agent训练实验（OpenRLHF/RAGEN贡献）**
+GitHub: flychen59/openrlhf-multimodal-experiments
+
+- 基于OpenRLHF（⭐9.5k）和RAGEN（⭐2.7k）框架，复现多模态GRPO训练流程
+- 将文本GRPO reward扩展到视觉场景，新增grounding准确率和视觉工具调用成功率维度
+- 在Qwen2.5-VL-7B上验证截屏理解→工具调用的RL训练效果，SFT→GRPO提升14pp
+
 ---
 
 ## 教育背景
@@ -159,9 +172,9 @@ GitHub: flychen59/Arxiv_mllm_mnbvc（⭐1）| flychen59/chinaxivCrawler_mnbvc（
 
 ## 技能
 
-- Agent算法：ReAct / Multi-Agent / Tool Use / GRPO强化学习 / Memory设计 / Agent评测（LLM-as-Judge）
-- 大模型训练：LoRA/QLoRA / DeepSpeed ZeRO / OpenRLHF / SFT数据构建 / 偏好对齐
-- 多模态：Qwen2-VL / CLIP / ViT / 视频理解 / ASR+OCR / 多模态数据处理与对齐
+- Agent算法：ReAct / Multi-Agent / Tool Use / GRPO强化学习 / 视觉工具调用 / Memory设计 / Agent评测（LLM-as-Judge）
+- 多模态：Qwen2-VL / Qwen2.5-VL / 视觉Grounding / GUI Agent（ShowUI/OS-Atlas） / 截屏理解 / 视频理解 / CLIP / ViT
+- 大模型训练：LoRA/QLoRA / DeepSpeed ZeRO / OpenRLHF / 多模态GRPO / SFT数据构建 / 偏好对齐（DPO/GRPO）
 - 模型部署：vLLM / AWQ量化 / continuous batching / PagedAttention
 - 工程：Python / Go / Redis / Ray / Docker / Linux
 - 语言：英语（托福79）/ 韩语（TOPIK 4）/ 可无障碍阅读英文论文和技术文档
